@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="시니컬경마 복기 자료실 화면 미리보기">
+  <title>시니컬경마 복기 자료실</title>
+  <style>
+    :root {
+      --navy: #101d3d;
+      --navy-2: #19294e;
+      --gold: #c99b38;
+      --gold-pale: #fff5df;
+      --ink: #17233e;
+      --muted: #68738a;
+      --line: #e2e7ef;
+      --surface: #ffffff;
+      --canvas: #f4f6fa;
+      --green: #18794e;
+      --green-pale: #e8f6ee;
+      --amber: #94600a;
+      --amber-pale: #fff3d7;
+      --shadow: 0 12px 32px rgba(16, 29, 61, .07);
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      color: var(--ink);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .topbar { background: var(--navy); color: white; border-bottom: 4px solid var(--gold); }
+    .topbar-inner { max-width: 1180px; margin: auto; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 13px; color: var(--gold); font-size: 25px; flex: 0 0 auto; }
+    .brand h1 { font-size: clamp(20px, 3vw, 27px); margin: 0; letter-spacing: -.04em; }
+    .brand p { margin: 4px 0 0; color: #c6cee0; font-size: 14px; }
+    .preview-pill { flex: 0 0 auto; color: #ffe6a8; border: 1px solid rgba(255,230,168,.55); background: rgba(201,155,56,.12); border-radius: 999px; padding: 9px 14px; font-weight: 700; font-size: 14px; }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 48px; }
+    .intro { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 20px; }
+    .intro h2 { margin: 0 0 6px; font-size: clamp(23px, 3vw, 32px); letter-spacing: -.045em; }
+    .intro p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.6; }
+    .intro-tag { color: var(--navy); background: #e8edf6; border-radius: 10px; padding: 10px 13px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .status-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .status-main { display: flex; align-items: center; gap: 16px; }
+    .status-icon { width: 50px; height: 50px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 14px; color: var(--gold); background: var(--gold-pale); font-size: 25px; }
+    .status-main h3 { margin: 0 0 4px; font-size: 20px; }
+    .status-main p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
+    .status-label { color: var(--amber); background: var(--amber-pale); border: 1px solid #f3dfb3; padding: 10px 14px; border-radius: 10px; font-weight: 800; white-space: nowrap; }
+    .notice { background: #fffaf0; border: 1px solid #f1dfb7; border-left: 5px solid var(--gold); border-radius: 12px; padding: 15px 17px; margin-bottom: 23px; color: #5e4b25; line-height: 1.6; font-size: 14px; }
+    .notice strong { color: #44320e; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 21px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 17px; }
+    .panel-heading h3 { font-size: 20px; margin: 0; letter-spacing: -.025em; }
+    .selected-date { color: var(--muted); font-size: 14px; }
+    .weekdays { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .day-button, .venue-button { min-height: 58px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--navy); font-weight: 800; font-size: 17px; transition: .15s ease; }
+    .day-button:hover, .venue-button:hover { border-color: var(--gold); transform: translateY(-1px); }
+    .day-button[aria-pressed="true"], .venue-button[aria-pressed="true"] { background: var(--navy); color: white; border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; }
+    .venue-button { min-width: 140px; padding: 0 20px; }
+    .list-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+    .list-head h3 { margin: 0; font-size: 21px; }
+    .demo-label { border-radius: 999px; color: var(--navy); background: #edf1f7; padding: 7px 11px; font-size: 13px; font-weight: 800; }
+    .race-list { display: grid; gap: 12px; }
+    .race-row { display: grid; grid-template-columns: 115px minmax(130px, 1fr) minmax(130px, 1fr) minmax(170px, .9fr); align-items: center; gap: 14px; border: 1px solid var(--line); border-radius: 13px; padding: 14px; background: #fff; }
+    .race-name { font-size: 20px; font-weight: 900; color: var(--navy); }
+    .race-name small { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; font-weight: 600; }
+    .status-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 10px; padding: 8px 12px; font-size: 15px; font-weight: 800; text-align: center; }
+    .chip-source { color: var(--green); background: var(--green-pale); }
+    .chip-pending { color: var(--amber); background: var(--amber-pale); }
+    .view-button { min-height: 44px; border: 0; border-radius: 10px; background: var(--gold); color: #18213a; font-weight: 900; font-size: 16px; padding: 8px 14px; }
+    .view-button:hover, .send-button:hover:not(:disabled) { filter: brightness(.96); }
+    .empty { display: none; text-align: center; padding: 28px 16px; color: var(--muted); border: 1px dashed #cbd3e1; border-radius: 12px; }
+    .actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; }
+    .actions p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .send-button { min-height: 52px; border: 0; border-radius: 12px; padding: 10px 18px; background: #b78a2d; color: white; font-size: 16px; font-weight: 900; white-space: nowrap; }
+    .send-button:disabled { cursor: not-allowed; color: #70798b; background: #e5e8ed; }
+    footer { text-align: center; color: #788298; padding: 8px 20px 28px; font-size: 13px; }
+    .toast { position: fixed; inset: auto 18px 18px; margin: auto; max-width: 500px; background: var(--navy); color: #fff; padding: 14px 18px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; display: none; z-index: 5; line-height: 1.5; }
+    @media (max-width: 760px) {
+      .topbar-inner { padding: 16px; }
+      .brand-mark { width: 40px; height: 40px; }
+      .brand p { font-size: 12px; }
+      .preview-pill { font-size: 12px; padding: 8px 10px; }
+      main { padding: 22px 14px 34px; }
+      .intro { align-items: start; flex-direction: column; }
+      .status-card { align-items: start; flex-direction: column; padding: 17px; }
+      .status-label { margin-left: 66px; }
+      .panel { padding: 16px; }
+      .day-button { min-height: 54px; font-size: 14px; padding: 5px; }
+      .venue-button { min-width: calc(50% - 5px); flex: 1; min-height: 52px; padding: 0 8px; font-size: 15px; }
+      .race-row { grid-template-columns: 1fr 1fr; gap: 9px; padding: 12px; }
+      .race-name { grid-column: 1 / -1; }
+      .view-button { grid-column: 1 / -1; }
+      .status-chip { min-height: 40px; font-size: 14px; padding: 7px; }
+      .actions { align-items: stretch; flex-direction: column; }
+      .send-button { width: 100%; white-space: normal; }
+      .panel-heading { align-items: start; flex-direction: column; }
+    }
+    @media (max-width: 390px) {
+      .brand { gap: 9px; }
+      .brand-mark { display: none; }
+      .weekdays { gap: 5px; }
+      .day-button { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">♞</div>
+        <div>
+          <h1>시니컬경마 복기자료실</h1>
+          <p>경주 자료를 날짜와 경마장별로 모아봅니다</p>
+        </div>
+      </div>
+      <span class="preview-pill">화면 미리보기</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <h2>경주 복기 자료</h2>
+        <p>목요일부터 월요일까지, 경주별 자료를 한곳에서 확인하세요.</p>
+      </div>
+      <span class="intro-tag">읽기 쉬운 큰 화면</span>
+    </section>
+
+    <section class="status-card" aria-label="자동 확인 상태">
+      <div class="status-main">
+        <div class="status-icon" aria-hidden="true">↻</div>
+        <div>
+          <h3>자동 자료 확인</h3>
+          <p>설정 목표: 10분마다 확인<br>시니컬.kr 서버 연결 전입니다.</p>
+        </div>
+      </div>
+      <span class="status-label">연동 준비 중</span>
+    </section>
+
+    <div class="notice">
+      <strong>안내:</strong> 지금 파일은 GitHub Pages에서 화면을 미리 보는 용도입니다. 자동 자료 수집, 마사회 결과 조회, Drive·Notion 저장은 별도 서버 연결 후 작동합니다. 비밀번호나 인증키를 이 파일에 넣지 마세요.
+    </div>
+
+    <section class="panel" aria-labelledby="days-title">
+      <div class="panel-heading">
+        <h3 id="days-title">경주 날짜</h3>
+        <span class="selected-date" id="selected-date">예시 날짜: 2026년 9월 20일</span>
+      </div>
+      <div class="weekdays" role="group" aria-label="요일 선택">
+        <button class="day-button" data-day="목요일" aria-pressed="false">목요일</button>
+        <button class="day-button" data-day="금요일" aria-pressed="false">금요일</button>
+        <button class="day-button" data-day="토요일" aria-pressed="false">토요일</button>
+        <button class="day-button" data-day="일요일" aria-pressed="true">일요일</button>
+        <button class="day-button" data-day="월요일" aria-pressed="false">월요일</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="venue-title">
+      <div class="panel-heading">
+        <h3 id="venue-title">경마장 선택</h3>
+        <span class="selected-date">경주장별로 자료를 모아봅니다</span>
+      </div>
+      <div class="filters" role="group" aria-label="경마장 필터">
+        <button class="venue-button" data-venue="서울" aria-pressed="false">서울</button>
+        <button class="venue-button" data-venue="제주" aria-pressed="false">제주</button>
+        <button class="venue-button" data-venue="부산경남" aria-pressed="false">부산경남</button>
+        <button class="venue-button" data-venue="영천" aria-pressed="true">영천</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="list-title">
+      <div class="list-head">
+        <h3 id="list-title">경주별 복기 자료</h3>
+        <span class="demo-label">화면 예시 자료</span>
+      </div>
+      <div class="race-list" id="race-list">
+        <article class="race-row" data-venue="영천">
+          <div class="race-name">5경주<small>영천 · 예시 자료</small></div>
+          <span class="status-chip chip-source">HTML 수신 예시</span>
+          <span class="status-chip chip-pending">경주 결과 대기</span>
+          <button class="view-button" data-race="5경주">복기 자료 보기</button>
+        </article>
+        <article class="race-row" data-venue="영천">
+          <div class="race-name">6경주<small>영천 · 예시 자료</small></div>
+          <span class="status-chip chip-source">HTML 수신 예시</span>
+          <span class="status-chip chip-pending">경주 결과 대기</span>
+          <button class="view-button" data-race="6경주">복기 자료 보기</button>
+        </article>
+        <article class="race-row" data-venue="서울" hidden>
+          <div class="race-name">1경주<small>서울 · 예시 자료</small></div>
+          <span class="status-chip chip-source">HTML 수신 예시</span>
+          <span class="status-chip chip-pending">경주 결과 대기</span>
+          <button class="view-button" data-race="1경주">복기 자료 보기</button>
+        </article>
+      </div>
+      <div class="empty" id="empty-message">선택한 경마장의 예시 자료가 없습니다.</div>
+      <div class="actions">
+        <p>원본 HTML은 그대로 보존하고, 공식 결과가 확인된 뒤 복기 자료를 만듭니다.</p>
+        <button class="send-button" id="send-button" disabled title="서버 연결 후 사용할 수 있습니다">Google Drive · Notion 전송 (연결 후 사용)</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>시니컬경마 복기자료실 · GitHub 업로드용 화면 시안</footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const dayButtons = [...document.querySelectorAll('.day-button')];
+    const venueButtons = [...document.querySelectorAll('.venue-button')];
+    const raceRows = [...document.querySelectorAll('.race-row')];
+    const dateLabel = document.getElementById('selected-date');
+    const emptyMessage = document.getElementById('empty-message');
+    const toast = document.getElementById('toast');
+    let toastTimer;
+
+    function showMessage(message) {
+      toast.textContent = message;
+      toast.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3800);
+    }
+
+    function selectedVenue() {
+      return venueButtons.find(button => button.getAttribute('aria-pressed') === 'true')?.dataset.venue;
+    }
+
+    function updateRows() {
+      const venue = selectedVenue();
+      let visibleCount = 0;
+      raceRows.forEach(row => {
+        const visible = row.dataset.venue === venue;
+        row.hidden = !visible;
+        if (visible) visibleCount++;
+      });
+      emptyMessage.style.display = visibleCount ? 'none' : 'block';
+    }
+
+    dayButtons.forEach(button => button.addEventListener('click', () => {
+      dayButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      dateLabel.textContent = `${button.dataset.day} 선택 · 날짜 자료는 서버 연결 후 표시됩니다`;
+      showMessage(`${button.dataset.day}을 선택했습니다. 현재는 화면 예시 모드입니다.`);
+    }));
+
+    venueButtons.forEach(button => button.addEventListener('click', () => {
+      venueButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      updateRows();
+    }));
+
+    document.querySelectorAll('.view-button').forEach(button => button.addEventListener('click', () => {
+      showMessage(`${button.dataset.race} 자료는 예시 화면입니다. 실제 HTML은 서버 연결 후 표시됩니다.`);
+    }));
+
+    document.getElementById('send-button').addEventListener('click', () => {
+      showMessage('Drive·Notion 전송은 서버 연결 후 사용할 수 있습니다.');
+    });
+
+    updateRows();
+  </script>
+</body>
+</html>
