@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="시니컬경마 복기 자료실 화면 미리보기">
+  <meta name="description" content="시니컬경마 복기 자료실">
   <title>시니컬경마 복기 자료실</title>
   <style>
     :root {
@@ -52,7 +52,8 @@
     .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 17px; }
     .panel-heading h3 { font-size: 20px; margin: 0; letter-spacing: -.025em; }
     .selected-date { color: var(--muted); font-size: 14px; }
-    .weekdays { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .weekdays { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    #date-filter { min-height: 44px; margin: 0 0 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--navy); background: #fff; }
     .day-button, .venue-button { min-height: 58px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--navy); font-weight: 800; font-size: 17px; transition: .15s ease; }
     .day-button:hover, .venue-button:hover { border-color: var(--gold); transform: translateY(-1px); }
     .day-button[aria-pressed="true"], .venue-button[aria-pressed="true"] { background: var(--navy); color: white; border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
@@ -68,7 +69,7 @@
     .status-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 10px; padding: 8px 12px; font-size: 15px; font-weight: 800; text-align: center; }
     .chip-source { color: var(--green); background: var(--green-pale); }
     .chip-pending { color: var(--amber); background: var(--amber-pale); }
-    .view-button { min-height: 44px; border: 0; border-radius: 10px; background: var(--gold); color: #18213a; font-weight: 900; font-size: 16px; padding: 8px 14px; }
+    .view-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border: 0; border-radius: 10px; background: var(--gold); color: #18213a; font-weight: 900; font-size: 16px; padding: 8px 14px; }
     .view-button:hover, .send-button:hover:not(:disabled) { filter: brightness(.96); }
     .empty { display: none; text-align: center; padding: 28px 16px; color: var(--muted); border: 1px dashed #cbd3e1; border-radius: 12px; }
     .actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; }
@@ -115,7 +116,7 @@
           <p>경주 자료를 날짜와 경마장별로 모아봅니다</p>
         </div>
       </div>
-      <span class="preview-pill">화면 미리보기</span>
+      <span class="preview-pill">Cloudflare 자료실</span>
     </div>
   </header>
 
@@ -133,86 +134,75 @@
         <div class="status-icon" aria-hidden="true">↻</div>
         <div>
           <h3>자동 자료 확인</h3>
-          <p>설정 목표: 10분마다 확인<br>시니컬.kr 서버 연결 전입니다.</p>
+          <p id="connection-message">Cloudflare 서버 연결을 확인하고 있습니다.</p>
         </div>
       </div>
-      <span class="status-label">연동 준비 중</span>
+      <span class="status-label" id="connection-label">확인 중</span>
     </section>
 
     <div class="notice">
-      <strong>안내:</strong> 지금 파일은 GitHub Pages에서 화면을 미리 보는 용도입니다. 자동 자료 수집, 마사회 결과 조회, Drive·Notion 저장은 별도 서버 연결 후 작동합니다. 비밀번호나 인증키를 이 파일에 넣지 마세요.
+      <strong>안내:</strong> 원본 사이트에서 공개로 읽을 수 있는 HTML은 10분마다 확인합니다. 파일 이름이 있는 분석 HTML은 <a href="/admin-upload.html">관리자 자료 올리기</a>에서도 전송할 수 있습니다. 마사회 공식 결과는 연결 키를 설정한 뒤 같은 경주 화면에 붙습니다.
     </div>
 
     <section class="panel" aria-labelledby="days-title">
       <div class="panel-heading">
         <h3 id="days-title">경주 날짜</h3>
-        <span class="selected-date" id="selected-date">예시 날짜: 2026년 9월 20일</span>
+        <label class="selected-date" for="date-filter">특정 날짜 보기</label>
       </div>
+      <input id="date-filter" type="date" aria-label="자료를 볼 날짜">
       <div class="weekdays" role="group" aria-label="요일 선택">
-        <button class="day-button" data-day="목요일" aria-pressed="false">목요일</button>
-        <button class="day-button" data-day="금요일" aria-pressed="false">금요일</button>
-        <button class="day-button" data-day="토요일" aria-pressed="false">토요일</button>
-        <button class="day-button" data-day="일요일" aria-pressed="true">일요일</button>
-        <button class="day-button" data-day="월요일" aria-pressed="false">월요일</button>
+        <button class="day-button" data-day="all" aria-pressed="true">전체</button>
+        <button class="day-button" data-day="4" aria-pressed="false">목요일</button>
+        <button class="day-button" data-day="5" aria-pressed="false">금요일</button>
+        <button class="day-button" data-day="6" aria-pressed="false">토요일</button>
+        <button class="day-button" data-day="0" aria-pressed="false">일요일</button>
+        <button class="day-button" data-day="1" aria-pressed="false">월요일</button>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="venue-title">
       <div class="panel-heading">
         <h3 id="venue-title">경마장 선택</h3>
-        <span class="selected-date">경주장별로 자료를 모아봅니다</span>
+        <span class="selected-date">목·금·토·일·월 경주일을 모두 지원합니다</span>
       </div>
       <div class="filters" role="group" aria-label="경마장 필터">
+        <button class="venue-button" data-venue="전체" aria-pressed="true">전체</button>
         <button class="venue-button" data-venue="서울" aria-pressed="false">서울</button>
         <button class="venue-button" data-venue="제주" aria-pressed="false">제주</button>
         <button class="venue-button" data-venue="부산경남" aria-pressed="false">부산경남</button>
-        <button class="venue-button" data-venue="영천" aria-pressed="true">영천</button>
+        <button class="venue-button" data-venue="영천" aria-pressed="false">영천</button>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="list-title">
       <div class="list-head">
         <h3 id="list-title">경주별 복기 자료</h3>
-        <span class="demo-label">화면 예시 자료</span>
+        <span class="demo-label" id="result-count">자료를 불러오는 중</span>
       </div>
-      <div class="race-list" id="race-list">
-        <article class="race-row" data-venue="영천">
-          <div class="race-name">5경주<small>영천 · 예시 자료</small></div>
-          <span class="status-chip chip-source">HTML 수신 예시</span>
-          <span class="status-chip chip-pending">경주 결과 대기</span>
-          <button class="view-button" data-race="5경주">복기 자료 보기</button>
-        </article>
-        <article class="race-row" data-venue="영천">
-          <div class="race-name">6경주<small>영천 · 예시 자료</small></div>
-          <span class="status-chip chip-source">HTML 수신 예시</span>
-          <span class="status-chip chip-pending">경주 결과 대기</span>
-          <button class="view-button" data-race="6경주">복기 자료 보기</button>
-        </article>
-        <article class="race-row" data-venue="서울" hidden>
-          <div class="race-name">1경주<small>서울 · 예시 자료</small></div>
-          <span class="status-chip chip-source">HTML 수신 예시</span>
-          <span class="status-chip chip-pending">경주 결과 대기</span>
-          <button class="view-button" data-race="1경주">복기 자료 보기</button>
-        </article>
-      </div>
-      <div class="empty" id="empty-message">선택한 경마장의 예시 자료가 없습니다.</div>
+      <div class="race-list" id="race-list"></div>
+      <div class="empty" id="empty-message">Cloudflare 서버 연결 후 자료가 표시됩니다.</div>
       <div class="actions">
-        <p>원본 HTML은 그대로 보존하고, 공식 결과가 확인된 뒤 복기 자료를 만듭니다.</p>
+        <p>경주를 선택하면 분석 HTML과 공식 결과를 한 화면에서 확인합니다.</p>
         <button class="send-button" id="send-button" disabled title="서버 연결 후 사용할 수 있습니다">Google Drive · Notion 전송 (연결 후 사용)</button>
       </div>
     </section>
   </main>
 
-  <footer>시니컬경마 복기자료실 · GitHub 업로드용 화면 시안</footer>
+  <footer>시니컬경마 복기자료실 · Cloudflare Pages</footer>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
     const dayButtons = [...document.querySelectorAll('.day-button')];
     const venueButtons = [...document.querySelectorAll('.venue-button')];
-    const raceRows = [...document.querySelectorAll('.race-row')];
-    const dateLabel = document.getElementById('selected-date');
     const emptyMessage = document.getElementById('empty-message');
     const toast = document.getElementById('toast');
+    const raceList = document.getElementById('race-list');
+    const dateFilter = document.getElementById('date-filter');
+    const connectionMessage = document.getElementById('connection-message');
+    const connectionLabel = document.getElementById('connection-label');
+    const resultCount = document.getElementById('result-count');
+    let races = [];
+    let selectedDay = 'all';
     let toastTimer;
 
     function showMessage(message) {
@@ -226,37 +216,88 @@
       return venueButtons.find(button => button.getAttribute('aria-pressed') === 'true')?.dataset.venue;
     }
 
+    function raceWeekday(dateText) {
+      const parts = String(dateText || '').split(/[.-]/).map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return '';
+      return String(new Date(parts[0], parts[1] - 1, parts[2]).getDay());
+    }
+
     function updateRows() {
       const venue = selectedVenue();
-      let visibleCount = 0;
-      raceRows.forEach(row => {
-        const visible = row.dataset.venue === venue;
-        row.hidden = !visible;
-        if (visible) visibleCount++;
+      const shown = races.filter(race => {
+        const venueMatch = venue === '전체' || race.venue === venue;
+        const dateMatch = !dateFilter.value || String(race.raceDate).replaceAll('.', '-') === dateFilter.value;
+        const dayMatch = selectedDay === 'all' || raceWeekday(race.raceDate) === selectedDay;
+        return venueMatch && dateMatch && dayMatch;
       });
-      emptyMessage.style.display = visibleCount ? 'none' : 'block';
+      raceList.replaceChildren();
+      for (const race of shown) {
+        const row = document.createElement('article');
+        row.className = 'race-row';
+        const name = document.createElement('div');
+        name.className = 'race-name';
+        name.textContent = `${race.raceNo}경주`;
+        const sub = document.createElement('small');
+        sub.textContent = `${race.venue} · ${race.raceDate}`;
+        name.appendChild(sub);
+        const source = document.createElement('span');
+        source.className = 'status-chip chip-source';
+        source.textContent = '원본 HTML 수신';
+        const result = document.createElement('span');
+        result.className = 'status-chip chip-pending';
+        result.textContent = race.resultStatus === 'ready' ? '결과 반영 완료' : '경주 결과 대기';
+        const view = document.createElement('a');
+        view.className = 'view-button';
+        view.href = `/race.html?id=${encodeURIComponent(race.id)}`;
+        view.textContent = '복기 + 결과 보기';
+        row.append(name, source, result, view);
+        raceList.appendChild(row);
+      }
+      resultCount.textContent = `${shown.length}건`;
+      emptyMessage.style.display = shown.length ? 'none' : 'block';
+      if (!races.length) emptyMessage.textContent = '아직 가져온 자료가 없습니다.';
     }
 
     dayButtons.forEach(button => button.addEventListener('click', () => {
       dayButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-      dateLabel.textContent = `${button.dataset.day} 선택 · 날짜 자료는 서버 연결 후 표시됩니다`;
-      showMessage(`${button.dataset.day}을 선택했습니다. 현재는 화면 예시 모드입니다.`);
+      selectedDay = button.dataset.day;
+      updateRows();
     }));
 
     venueButtons.forEach(button => button.addEventListener('click', () => {
       venueButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
       updateRows();
     }));
+    dateFilter.addEventListener('change', updateRows);
 
-    document.querySelectorAll('.view-button').forEach(button => button.addEventListener('click', () => {
-      showMessage(`${button.dataset.race} 자료는 예시 화면입니다. 실제 HTML은 서버 연결 후 표시됩니다.`);
-    }));
-
-    document.getElementById('send-button').addEventListener('click', () => {
-      showMessage('Drive·Notion 전송은 서버 연결 후 사용할 수 있습니다.');
-    });
+    async function loadSiteData() {
+      try {
+        const [statusResponse, racesResponse] = await Promise.all([
+          fetch('/api/status'),
+          fetch('/api/races')
+        ]);
+        if (!statusResponse.ok || !racesResponse.ok) throw new Error('Cloudflare API is not ready');
+        const status = await statusResponse.json();
+        const data = await racesResponse.json();
+        races = Array.isArray(data.races) ? data.races : [];
+        connectionLabel.textContent = status.lastSyncAt ? '서버 연결됨' : '첫 수집 대기';
+        connectionMessage.textContent = status.lastSyncAt
+          ? status.sync?.status === 'error'
+            ? `마지막 확인에 문제가 있었습니다 · ${status.sync.message || '수집 오류'}`
+            : `10분 간격 자동 확인 · 마지막 확인 ${new Date(status.lastSyncAt).toLocaleString('ko-KR')}`
+          : '사이트 서버는 연결됐고 첫 자동 수집을 기다리고 있습니다.';
+        updateRows();
+      } catch {
+        connectionLabel.textContent = '서버 연결 대기';
+        connectionMessage.textContent = 'Cloudflare 데이터베이스와 수집 Worker 설정 후 자동으로 자료를 불러옵니다.';
+        resultCount.textContent = '아직 연결 전';
+        emptyMessage.textContent = '서버 연결 후 원본 사이트에 올라온 자료가 여기에 표시됩니다.';
+        emptyMessage.style.display = 'block';
+      }
+    }
 
     updateRows();
+    loadSiteData();
   </script>
 </body>
 </html>
