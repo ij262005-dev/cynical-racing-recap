@@ -40,3 +40,13 @@ test("checks the newest records every run and rotates through the older archive"
   const second = chooseRaces(items, first.nextCursor);
   assert.deepEqual(second.selected.slice(10).map((item) => item.id), [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]);
 });
+
+test("keeps only the latest public analysis for each race", () => {
+  const rows = [
+    { id: 10, raceDate: "2026.09.11", venue: "부산경남", raceNo: 7, version: "V230", createdAt: "2026-09-10T22:00:00Z" },
+    { id: 11, raceDate: "2026.09.11", venue: "부경", raceNo: 7, version: "V233", createdAt: "2026-09-10T23:00:00Z" },
+    { id: 12, raceDate: "2026.09.11", venue: "부경", raceNo: 8, version: "V233", createdAt: "2026-09-10T23:05:00Z" },
+  ];
+  const result = chooseRaces(rows, 0);
+  assert.deepEqual(result.selected.map((item) => item.id), [11, 12]);
+});
