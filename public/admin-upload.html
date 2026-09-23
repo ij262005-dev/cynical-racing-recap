@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>복기 사이트 자료 올리기</title>
+  <style>
+    :root { font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: #17233e; background: #f4f6fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #101d3d; color: white; border-bottom: 4px solid #c99b38; }
+    .wrap { max-width: 950px; margin: auto; padding: 20px 22px; }
+    header .wrap { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+    h1 { margin: 0; font-size: clamp(20px, 4vw, 27px); }
+    a { color: inherit; }
+    .back { text-decoration: none; padding: 9px 12px; border: 1px solid #ffffff55; border-radius: 9px; }
+    main { padding-top: 22px; padding-bottom: 40px; }
+    .card { background: white; border: 1px solid #e2e7ef; border-radius: 15px; padding: 20px; margin-bottom: 16px; box-shadow: 0 12px 32px #101d3d0c; }
+    .card h2 { margin: 0 0 10px; font-size: 20px; }
+    p { color: #5f6b81; line-height: 1.6; }
+    label { display: block; font-weight: 800; margin: 14px 0 7px; }
+    input[type="password"], input[type="file"] { width: 100%; min-height: 46px; padding: 10px; border: 1px solid #cbd3e1; border-radius: 9px; background: white; font: inherit; }
+    button { min-height: 48px; margin-top: 15px; border: 0; border-radius: 10px; background: #c99b38; color: #18213a; padding: 10px 18px; font: inherit; font-weight: 900; cursor: pointer; }
+    button:disabled { background: #e2e6ed; color: #70798b; cursor: not-allowed; }
+    .note { padding: 13px 15px; border-radius: 10px; background: #fff6e3; color: #65480e; line-height: 1.55; }
+    .muted { font-size: 14px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 520px; margin-top: 12px; }
+    th, td { border-bottom: 1px solid #e2e7ef; text-align: left; padding: 10px 9px; }
+    th { background: #f7f8fb; color: #58657c; font-size: 13px; }
+    #message { white-space: pre-wrap; line-height: 1.55; }
+    .good { color: #18794e; }
+    .bad { color: #a23d32; }
+    @media (max-width: 600px) { .wrap { padding-left: 14px; padding-right: 14px; } .card { padding: 15px; } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><h1>복기 사이트에 HTML 올리기</h1><a class="back" href="/">목록으로</a></div></header>
+  <main class="wrap">
+    <section class="card">
+      <h2>1. HTML 파일 고르기</h2>
+      <p>파일 이름에서 경주장·날짜·경주번호를 자동으로 읽습니다. 예: <strong>시니컬AI_부경_20260911_7경주_V233.html</strong></p>
+      <input id="files" type="file" accept=".html,text/html" multiple>
+      <div class="table-wrap"><table><thead><tr><th>파일</th><th>경마장</th><th>경주일</th><th>경주</th><th>상태</th></tr></thead><tbody id="file-rows"></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>2. 복기 사이트 전송 키 넣기</h2>
+      <div class="note">여기에는 Cloudflare에 설정한 <strong>SYNC_TOKEN</strong>을 넣습니다. 시니컬.kr 로그인 비밀번호는 여기에 넣지 마세요. 입력한 키는 저장하지 않고 전송 후 지웁니다.</div>
+      <label for="token">전송 키</label>
+      <input id="token" type="password" autocomplete="off" placeholder="Cloudflare SYNC_TOKEN">
+      <button id="upload" disabled>선택한 HTML을 복기 사이트에 올리기</button>
+    </section>
+    <section class="card" id="message-card" hidden><h2>전송 결과</h2><div id="message" role="status" aria-live="polite"></div></section>
+    <p class="muted">업로드 후 경주 결과는 마사회 공식 결과 연결 키가 설정되어 있으면 10분 안에 자동으로 붙습니다.</p>
+  </main>
+  <script>
+    const filesInput = document.getElementById('files');
+    const tokenInput = document.getElementById('token');
+    const uploadButton = document.getElementById('upload');
+    const fileRows = document.getElementById('file-rows');
+    const messageCard = document.getElementById('message-card');
+    const message = document.getElementById('message');
+    let files = [];
+    function readMetadata(file) {
+      const match = file.name.match(/시니컬AI_(서울|부경|부산경남|부산|제주|영천)_(\d{8})_(\d{1,2})경주/i);
+      if (!match) return null;
+      const venue = ({ 부경: '부산경남', 부산: '부산경남' })[match[1]] || match[1];
+      const rawDate = match[2];
+      return { venue, raceDate: `${rawDate.slice(0,4)}.${rawDate.slice(4,6)}.${rawDate.slice(6,8)}`, raceNo: Number(match[3]) };
+    }
+    function renderFiles() {
+      fileRows.replaceChildren();
+      files.forEach(({file, meta, status}) => {
+        const row = document.createElement('tr');
+        const values = [file.name, meta?.venue || '파일명 확인 필요', meta?.raceDate || '—', meta ? `${meta.raceNo}경주` : '—', status];
+        values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.appendChild(cell); });
+        fileRows.appendChild(row);
+      });
+      uploadButton.disabled = !files.length || files.some(item => !item.meta) || !tokenInput.value.trim();
+    }
+    filesInput.addEventListener('change', () => {
+      files = [...filesInput.files].map(file => ({file, meta: readMetadata(file), status: readMetadata(file) ? '대기' : '파일 이름을 확인하세요'}));
+      renderFiles();
+    });
+    tokenInput.addEventListener('input', renderFiles);
+    uploadButton.addEventListener('click', async () => {
+      const token = tokenInput.value.trim();
+      if (!token) return;
+      uploadButton.disabled = true;
+      messageCard.hidden = false;
+      const lines = [];
+      for (const item of files) {
+        item.status = '전송 중'; renderFiles();
+        try {
+          const form = new FormData();
+          form.set('action', 'upload-html');
+          form.set('raceDate', item.meta.raceDate);
+          form.set('venue', item.meta.venue);
+          form.set('raceNo', String(item.meta.raceNo));
+          form.set('title', item.file.name.replace(/\.html$/i, ''));
+          form.set('cornerType', 'pre');
+          form.set('htmlFile', item.file, item.file.name);
+          const response = await fetch('/api/admin/sync', {method: 'POST', headers: {Authorization: `Bearer ${token}`}, body: form});
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || `전송 오류 (${response.status})`);
+          item.status = '완료';
+          lines.push(`완료: ${item.file.name}`);
+        } catch (error) {
+          item.status = '실패';
+          lines.push(`실패: ${item.file.name} · ${String(error.message || error)}`);
+        }
+        renderFiles();
+      }
+      message.textContent = lines.join('\n');
+      message.className = files.every(item => item.status === '완료') ? 'good' : 'bad';
+      tokenInput.value = '';
+      renderFiles();
+    });
+  </script>
+</body>
+</html>
