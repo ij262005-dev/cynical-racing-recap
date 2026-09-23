@@ -4,9 +4,14 @@ export async function onRequestGet({ params, env }) {
   if (!Number.isSafeInteger(id) || id < 1) return Response.json({ message: "잘못된 자료 번호입니다." }, { status: 400 });
 
   const race = await env.DB.prepare(
-    "SELECT id, race_date AS raceDate, venue, race_no AS raceNo, title, corner_type AS cornerType, synced_at AS syncedAt, result_status AS resultStatus, object_key AS objectKey FROM races WHERE id = ?",
+    "SELECT id, race_date AS raceDate, venue, race_no AS raceNo, title, corner_type AS cornerType, synced_at AS syncedAt, result_status AS resultStatus, result_json AS resultJson, object_key AS objectKey FROM races WHERE id = ?",
   ).bind(id).first();
   if (!race) return Response.json({ message: "자료를 찾을 수 없습니다." }, { status: 404 });
-  const { objectKey, ...publicRace } = race;
+  const { objectKey, resultJson, ...publicRace } = race;
+  try {
+    publicRace.result = resultJson ? JSON.parse(resultJson) : null;
+  } catch {
+    publicRace.result = null;
+  }
   return Response.json(publicRace, { headers: { "Cache-Control": "public, max-age=60" } });
 }
