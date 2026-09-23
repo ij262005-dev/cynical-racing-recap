@@ -9,12 +9,13 @@ export async function onRequestGet({ request, env }) {
   const where = [];
   const values = [];
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    where.push("race_date = ?");
+    where.push("replace(race_date, '.', '-') = ?");
     values.push(date);
   }
   if (venue && venue !== "전체") {
+    const canonical = ["부경", "부산"].includes(venue) ? "부산경남" : venue;
     where.push("venue = ?");
-    values.push(venue);
+    values.push(canonical);
   }
   if (day && /^[0-6]$/.test(day)) {
     where.push("CAST(strftime('%w', replace(race_date, '.', '-')) AS TEXT) = ?");
