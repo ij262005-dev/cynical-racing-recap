@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS races (
   object_key TEXT NOT NULL,
   result_status TEXT NOT NULL DEFAULT 'pending',
   result_json TEXT,
-  UNIQUE (race_date, venue, race_no, source_id)
+  UNIQUE (race_date, venue, race_no)
 );
 
 CREATE INDEX IF NOT EXISTS races_date_venue_no
