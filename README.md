@@ -4,13 +4,12 @@
 
 ## 자료가 들어오는 흐름
 
-1. 공개 분석 HTML을 시니컬.kr에 올립니다.
-2. Railway의 V233 업로드 경로가 같은 HTML을 Cloudflare 복기 사이트에도 즉시 전송합니다.
-3. 과거에 이미 시니컬.kr에 올린 HTML은 복기 사이트의 `/admin-upload.html`에서 파일로 한 번 올립니다. 파일명은 `시니컬AI_부경_20260911_7경주_V233.html`처럼 경주장·날짜·경주번호를 포함해야 합니다.
-4. Worker가 10분마다 아직 결과가 없는 경주를 확인하고, 한국마사회 공식 경주기록 API의 결과를 같은 날짜·경마장·경주번호에 연결합니다.
-5. 이용자는 목록에서 **복기 + 결과 보기**를 눌러 결과표와 원본 HTML을 함께 봅니다.
+1. 분석 HTML을 시니컬.kr에 공개 업로드합니다.
+2. Worker가 10분마다 시니컬.kr의 공개 경주 목록을 확인해 최신 분석 HTML을 복기 사이트로 복사합니다. 비공개이거나 공개 API 목록에 나오지 않는 자료는 가져오지 않습니다.
+3. 같은 Worker가 마사회 공식 경주기록 API를 확인해 날짜·경마장·경주번호가 같은 결과를 붙입니다.
+4. 이용자는 목록에서 **복기 + 결과 보기**를 눌러 결과표와 분석 HTML을 같은 화면에서 봅니다.
 
-시니컬.kr의 공개 화면에서 상세 자료가 잠금 안내로만 보일 때는 자동 수집기가 그 내용을 가져오지 않습니다. 새 파일은 원본 업로드 시점에 보내고, 기존 파일은 관리자 파일 올리기 화면으로 옮깁니다.
+예전에 받은 HTML이나 공개 목록에 없는 파일은 복기 사이트의 `/admin-upload.html`에서 한 번 올릴 수 있습니다. 파일명은 `시니컬AI_부경_20260911_7경주_V233.html`처럼 경주장·날짜·경주번호를 포함해야 합니다. 공개 API가 잠금 안내만 돌려주는 자료는 자동으로 가져오지 않습니다.
 
 ## Cloudflare 준비
 
@@ -24,12 +23,12 @@
    - `RECAP_SITE_BASE_URL`: Cloudflare Pages 주소
    - `SYNC_TOKEN`: Pages와 같은 전송용 문자열
    - `KRA_SERVICE_KEY`: 공공데이터포털에서 신청한 한국마사회 경주기록 API 인증키
-   - `CYNICAL_SOURCE_BASE_URL`: 선택 항목. 공개 `race.list`/`race.get` 읽기를 시험할 때만 설정합니다. 새 V233 HTML은 Railway에서 직접 보내므로 필수 항목이 아닙니다.
-8. 시니컬.kr의 Railway Variables에 다음 값을 넣습니다.
+   - `CYNICAL_SOURCE_BASE_URL`: `https://시니컬.kr` — 공개 분석 HTML을 10분마다 자동 확인할 때 필요합니다.
+8. (선택) Railway에서 업로드 직후 복기 사이트로 보내려면 시니컬.kr의 Railway Variables에 다음 값을 넣고, `RECAP_MIRROR_SETUP.md` 변경 사항도 Railway에 배포합니다.
    - `RECAP_SITE_BASE_URL`: Cloudflare Pages 주소
    - `RECAP_SYNC_TOKEN`: Pages/Worker의 `SYNC_TOKEN`과 같은 문자열
 
-`SYNC_TOKEN`, `RECAP_SYNC_TOKEN`, `KRA_SERVICE_KEY`는 HTML이나 GitHub 코드에 넣지 않습니다. 인증키는 채팅으로 보내지 말고 해당 서비스의 Secrets 화면에 직접 입력하세요.
+`SYNC_TOKEN`, `RECAP_SYNC_TOKEN`, `KRA_SERVICE_KEY`는 HTML이나 GitHub 코드에 넣지 않습니다. 본인이 새로 정한 긴 전송용 문자열을 사용하고, 시니컬.kr 로그인 비밀번호는 사용하지 않습니다. 한국마사회 인증키는 활용신청 후 해당 서비스의 Secrets 화면에 직접 입력하세요.
 
 ## 마사회 결과 API
 
