@@ -48,7 +48,38 @@ export function batch(items, size) {
   return groups;
 }
 
+function raceIdentity(item) {
+  const date = String(item.raceDate ?? "").trim();
+  const rawVenue = String(item.venue ?? "").replace(/\s/g, "");
+  const venue = ["부경", "부산"].includes(rawVenue) ? "부산경남" : rawVenue;
+  const raceNo = Number(item.raceNo);
+  return date && venue && Number.isSafeInteger(raceNo) ? `${date}|${venue}|${raceNo}` : `id:${item.id}`;
+}
+
+function isNewer(candidate, current) {
+  const candidateTime = Date.parse(candidate.updatedAt || candidate.createdAt || "") || 0;
+  const currentTime = Date.parse(current.updatedAt || current.createdAt || "") || 0;
+  if (candidateTime !== currentTime) return candidateTime > currentTime;
+  const candidateVersion = Number(String(candidate.version ?? "").match(/\d+/)?.[0]) || 0;
+  const currentVersion = Number(String(current.version ?? "").match(/\d+/)?.[0]) || 0;
+  if (candidateVersion !== currentVersion) return candidateVersion > currentVersion;
+  return Number(candidate.id) > Number(current.id);
+}
+
+function latestPerRace(items) {
+  const latest = new Map();
+  for (const item of items) {
+    const key = raceIdentity(item);
+    const current = latest.get(key);
+    if (!current || isNewer(item, current)) latest.set(key, item);
+  }
+  return [...latest.values()];
+}
+
 export function chooseRaces(items, cursor, headCount = 10, rotatingCount = 10) {
+  // The source keeps multiple public analysis versions for a race. Mirror only
+  // the latest one so an older version cannot overwrite the final HTML later.
+  items = latestPerRace(items);
   if (items.length <= headCount) return { selected: items, nextCursor: 0 };
   const head = items.slice(0, headCount);
   const archive = items.slice(headCount);
