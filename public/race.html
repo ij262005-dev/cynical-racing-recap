@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>경주 복기 자료</title>
+  <style>
+    :root { font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: #17233e; background: #f4f6fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #101d3d; color: white; border-bottom: 4px solid #c99b38; }
+    .wrap { max-width: 1180px; margin: auto; padding: 20px 22px; }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    h1 { margin: 0; font-size: clamp(20px, 4vw, 28px); }
+    header p { margin: 5px 0 0; color: #c6cee0; }
+    a { color: inherit; }
+    .back { border: 1px solid #ffffff55; border-radius: 10px; padding: 10px 13px; text-decoration: none; white-space: nowrap; font-weight: 700; }
+    main { padding-top: 22px; padding-bottom: 40px; }
+    .card { background: white; border: 1px solid #e2e7ef; border-radius: 16px; box-shadow: 0 12px 32px #101d3d0c; padding: 20px; margin-bottom: 18px; }
+    .meta { color: #68738a; line-height: 1.6; }
+    .card-title { margin: 0 0 10px; font-size: 21px; }
+    .state { padding: 13px 15px; border-radius: 11px; background: #fff3d7; color: #805309; line-height: 1.55; }
+    .result-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .source { color: #65718a; font-size: 13px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid #e2e7ef; text-align: left; }
+    th { color: #526078; font-size: 13px; background: #f7f8fb; }
+    td:first-child { font-weight: 900; color: #101d3d; }
+    .badge { display: inline-flex; border-radius: 999px; padding: 7px 11px; background: #e8f6ee; color: #18794e; font-weight: 800; font-size: 13px; }
+    .frame-wrap { height: min(78vh, 1200px); min-height: 640px; background: white; border: 1px solid #e2e7ef; border-radius: 14px; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    #error { display: none; }
+    @media (max-width: 650px) { .wrap { padding-left: 14px; padding-right: 14px; } .card { padding: 15px; } .frame-wrap { min-height: 520px; height: 72vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div><h1>시니컬경마 복기 자료</h1><p>공식 경주 결과와 분석 HTML</p></div>
+      <a class="back" href="/">목록으로</a>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="card">
+      <h2 class="card-title" id="race-title">자료를 불러오는 중</h2>
+      <div class="meta" id="race-meta"></div>
+    </section>
+    <section class="card" aria-labelledby="result-heading">
+      <div class="result-head">
+        <div><h2 class="card-title" id="result-heading">공식 경주 결과</h2><div class="source" id="result-source"></div></div>
+        <span class="badge" id="result-badge">확인 중</span>
+      </div>
+      <div class="state" id="result-state">결과를 확인하고 있습니다.</div>
+      <div class="table-wrap" id="result-table-wrap" hidden>
+        <table>
+          <thead><tr><th>순위</th><th>마번</th><th>마명</th><th>기수</th><th>기록</th><th>착차</th><th>마체중</th></tr></thead>
+          <tbody id="result-rows"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="card-title">분석 HTML</h2>
+      <div class="frame-wrap"><iframe id="analysis-frame" title="경주 분석 HTML" sandbox=""></iframe></div>
+    </section>
+    <section class="card state" id="error" role="alert"></section>
+  </main>
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+    const byId = (name) => document.getElementById(name);
+    const showError = (message) => { byId('error').textContent = message; byId('error').style.display = 'block'; };
+    const text = (value) => String(value ?? '').trim() || '—';
+    function renderResults(result) {
+      if (!result || !Array.isArray(result.horses) || result.horses.length === 0) {
+        byId('result-badge').textContent = '결과 대기';
+        byId('result-state').textContent = '마사회 공식 결과를 아직 받지 못했습니다. 결과 조회 키가 연결되면 자동으로 이 경주에 붙습니다.';
+        return;
+      }
+      byId('result-badge').textContent = '결과 반영 완료';
+      byId('result-state').hidden = true;
+      byId('result-source').textContent = `${text(result.source)} · 확인 ${result.fetchedAt ? new Date(result.fetchedAt).toLocaleString('ko-KR') : '시각 정보 없음'}`;
+      const tbody = byId('result-rows');
+      for (const horse of result.horses) {
+        const row = document.createElement('tr');
+        for (const value of [horse.rank, horse.horseNo, horse.horseName, horse.jockey, horse.time, horse.margin, horse.horseWeight]) {
+          const cell = document.createElement('td');
+          cell.textContent = text(value);
+          row.appendChild(cell);
+        }
+        tbody.appendChild(row);
+      }
+      byId('result-table-wrap').hidden = false;
+    }
+    async function load() {
+      if (!id || !/^\d+$/.test(id)) return showError('경주 자료 번호를 확인해 주세요.');
+      try {
+        const response = await fetch(`/api/races/${encodeURIComponent(id)}`);
+        if (!response.ok) throw new Error(response.status === 404 ? '경주 자료를 찾지 못했습니다.' : '자료를 불러오지 못했습니다.');
+        const race = await response.json();
+        byId('race-title').textContent = `${race.raceDate} · ${race.venue} · ${race.raceNo}경주`;
+        byId('race-meta').textContent = `${race.title || ''}${race.syncedAt ? ` · 자료 확인 ${new Date(race.syncedAt).toLocaleString('ko-KR')}` : ''}`;
+        byId('analysis-frame').src = `/api/races/${encodeURIComponent(id)}/html`;
+        renderResults(race.result);
+      } catch (error) {
+        showError(String(error.message || error));
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
